@@ -1,0 +1,40 @@
+a := 0;
+b:=a+5;
+c
+:=
+(a-b)*37/f
+;
+GET(x);//Test comment at end of line
+GET(y,z);
+PUT ( "the answer IS ", x+y*z);
+IF a THEN b:=1; END IF;
+IF a>b THEN c:=0; d:=-a+b; ELSE a:=5; b:=2; END IF;
+IF x*4/y+2<=b+c*3 THEN
+z:=4; ELSIF x/=y THEN z:=0;
+END IF;
+IF a>=c & x+y
+THEN IF b=0 | x-y THEN IF c<d THEN z:=x-y; ELSE z:=x+ABS(y);
+END IF;
+END IF;
+ELSE a:=SQRT(x); END IF;
+//Test empty THEN clause
+IF x THEN ELSE z:=y; END IF;
+a:=-^-+-^++-y;
+LOOP a:=b*c; END LOOP;
+loop1: LOOP x:=x+1; IF x>5 THEN EXIT loop1; END IF; y:=y-2; END LOOP;
+loop2: WHILE x>y LOOP
+a:=b+c;
+EXIT loop2;
+d:=1;
+END LOOP;
+WHILE a/=b LOOP
+loop3: LOOP a:=0; b:=1; 
+loop4: WHILE x=z LOOP
+GET(x);
+IF x>0 THEN EXIT loop3; END IF;
+PUT(y);
+END LOOP;
+PUT(z);
+END LOOP;
+PUT(x);
+END LOOP;

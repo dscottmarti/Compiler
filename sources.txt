@@ -1,0 +1,11 @@
+C:\Users\dmartins\Desktop\Compiler\MyParser.java
+C:\Users\dmartins\Desktop\Compiler\MyParserConstants.java
+C:\Users\dmartins\Desktop\Compiler\MyParserTokenManager.java
+C:\Users\dmartins\Desktop\Compiler\ParseException.java
+C:\Users\dmartins\Desktop\Compiler\SimpleCharStream.java
+C:\Users\dmartins\Desktop\Compiler\Token.java
+C:\Users\dmartins\Desktop\Compiler\TokenMgrError.java
+C:\Users\dmartins\Desktop\Compiler\helpers\CmdTable.java
+C:\Users\dmartins\Desktop\Compiler\helpers\Quad.java
+C:\Users\dmartins\Desktop\Compiler\helpers\Symbol.java
+C:\Users\dmartins\Desktop\Compiler\helpers\SymTab.java

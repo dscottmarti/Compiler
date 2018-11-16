@@ -1,0 +1,331 @@
+/*
+To Do:
+relative operators
+logial operators
+
+ */
+
+PARSER_BEGIN(MyParser)
+import helpers.*;
+import java.util.*;
+public class MyParser {
+
+    static int nextQuad;
+    static ArrayList<Quad> quads;
+    static Stack<String> stack;
+    static SymTab symtab;
+    /** Main entry point. */
+    public static void main(String args[]) throws ParseException {
+        nextQuad = 0;
+        quads = new ArrayList<Quad>();
+        stack = new Stack<String>();   
+        symtab = new SymTab();     
+        MyParser parser = new MyParser(System.in);
+        parser.Program();
+        printQuads();
+    }
+
+    public static void genQuad(String cmd, String op1, String op2, String dest){
+        Quad quad = new Quad(cmd, op1, op2, dest);
+        System.out.println(quad.toString());
+        quads.add(quad);
+        nextQuad++;
+    }
+    public static void backpatch(int index, int target){
+        if(index == 0)
+            return;
+        int temp = Integer.parseInt(quads.get(index).dest);
+        quads.get(index).dest = ""+target;
+        backpatch(temp, target);
+    }
+
+    public static void printStack(){
+        System.out.println("STACK:");
+        for(int i = 0; i<stack.size(); i++){
+            System.out.println(stack.get(i));
+        }
+    }
+    public static void printQuads(){
+        for(int i = 0; i<quads.size(); i++){
+            System.out.println(quads.get(i).toString());
+        }
+    }
+  
+}
+
+PARSER_END(MyParser)
+
+SKIP :
+{
+  " "
+| "\t"
+| "\n"
+| "\r"
+| <"//" (~["\n","\r"])* ("\n"|"\r")>
+}
+
+
+TOKEN :
+{
+    <WHILE: "WHILE" | "while">
+  | <LOOP: "LOOP" | "loop">
+  | <IF: "IF" | "if">
+  | <THEN: "THEN" | "then">
+  | <ELSIF: "ELSIF" | "elsif">
+  | <ELSE: "ELSE" | "else">
+  | <END: "END" | "end">
+  | <EXIT: "EXIT" | "exit">
+  | <GET: "GET" | "get">
+  | <PUT: "PUT" | "put">
+  | <SQRT: "SQRT" | "sqrt">
+  | <ABS: "ABS" | "abs">
+  | < Id: ["a"-"z","A"-"Z"] ( ["a"-"z","A"-"Z","0"-"9"] )* >
+  | < Int:(["0"-"9"])+>
+  | < String: "\""(["a"-"z", "A"-"Z", "0"-"9", "~","`","!","@","#","$","%","^","&", "*", "(", ")", "_", "-", "+", "=", "{", "}", "[", "]", "|", "\\", ":", ";", "'","<",",",">",".","?","/", " "])*"\"">
+}
+
+/** Top level production. */
+void Program():
+{}
+{
+    (Statement())* <EOF>
+}
+
+void Statement():
+{
+    String a;
+    String b;
+}
+{
+    (LOOKAHEAD(2)((LabelID()":")?(<WHILE> Expression())?<LOOP>(Statement())*<END><LOOP>) |
+    (<IF> Expression() {
+        a = stack.pop();
+        genQuad("jeqz",a,"","0");
+        stack.push(Integer.toString(nextQuad));
+        // printStack();
+    }<THEN> (Statement())*(<ELSIF> {
+        a=stack.pop();
+        System.out.println(a);
+        stack.push(Integer.toString(nextQuad));
+        genQuad("jump","","","0");
+        quads.get(Integer.parseInt(a)-1).dest=Integer.toString(nextQuad);
+    }Expression() {
+        a = stack.pop();
+        genQuad("jeqz",a,"","0");
+        stack.push(Integer.toString(nextQuad));
+        // printStack();
+    } <THEN> (Statement())*)*(<ELSE> {
+        a=stack.pop();
+        System.out.println(a);
+        stack.push(Integer.toString(nextQuad));
+        genQuad("jump","","","0");
+        quads.get(Integer.parseInt(a)-1).dest=Integer.toString(nextQuad);
+    }(Statement())*)?{
+        a=stack.pop();
+        // printStack();
+        quads.get(Integer.parseInt(a)-1).dest=Integer.toString(nextQuad);
+        printQuads();
+    }<END><IF>) |
+    (a=Id(){
+        Symbol temp = symtab.table.get(a);
+        stack.push(a);
+        // printStack();
+    } ":=" Expression(){
+        a=stack.pop();
+        b=stack.pop();
+        // printStack();
+        genQuad(":=", a, "", b);
+    }) |
+    (<EXIT> LabelID()) |
+    (<GET> "(" InputList() ")") |
+     (<PUT> "(" OutputList() ")")) ";"{printStack();}
+}
+
+void LabelID():
+{}
+{
+    Id()
+}
+
+void InputList():
+{}
+{
+    Id()("," Id())*
+}
+
+void OutputList():
+{}
+{
+    (<String> | Expression())("," (<String> | Expression()))*
+}
+
+void Expression():
+{
+    String a;
+    String b;
+    String c;
+}
+{
+    And() ("|" And(){
+        a = stack.pop();
+        b = stack.pop();
+        c = symtab.newTemp();  
+        genQuad("|", b, a, c);
+        stack.push(c);
+        // printStack();
+    })*
+}
+
+void And():
+{
+    String a;
+    String b;
+    String c;
+}
+{
+    Rel()("&" Rel(){
+        a = stack.pop();
+        b = stack.pop();
+        c  = symtab.newTemp();
+        genQuad("&", b, a, c);
+        stack.push(c);
+        // printStack();
+    })*
+}
+
+void Rel():
+{
+    String op;
+    String a;
+    String b;
+    String c;
+}
+{
+    Term() (op=RelOp() Term(){
+        a = stack.pop();
+        b = stack.pop();
+        c = symtab.newTemp();
+        genQuad(op,b,a,c);
+        stack.push(c);
+        // printStack();
+    })*
+}
+
+String RelOp():
+{
+    Token t;
+}
+{
+    (t="<" | t="<=" | t="=" | t="/=" | t=">=" | t=">"){
+        return t.image;
+    }
+}
+
+void Term():
+{
+    String a;
+    String b;
+    String c;
+    String op;
+}
+{
+    Factor()(op=AddOp() Factor(){
+        a=stack.pop();
+        b=stack.pop();
+        c=symtab.newTemp();
+        genQuad(op,b,a,c);
+        stack.push(c);
+        // printStack();
+    })*
+}
+
+String AddOp():
+{
+    Token t;
+}
+{
+    (t="+" | t="-")
+    {
+        return t.image;
+    }
+}
+
+void Factor():
+{
+    String a;
+    String b;
+    String c;
+    String op;
+}
+{
+    Primary()(op=MulOp() Primary()
+    {
+        a =stack.pop();
+        b =stack.pop();
+        c = symtab.newTemp();
+        genQuad(op, b, a, c);
+        stack.push(c);
+        // printStack();
+    })*
+}
+
+String MulOp():
+{
+    Token t;
+}
+{
+    (t="*" | t="/")
+    {
+        return t.image;
+    }
+}
+
+void Primary():
+{}
+{
+    (UnaryOp())*Unit()
+}
+ void UnaryOp():
+ {}
+ {
+     "+" | "-" | "^"
+ }
+
+ void Unit():
+ {String s;}
+ {
+     (s=Id() | s=Int()){ 
+         stack.push(s);
+        //  printStack();
+        } 
+         | (<SQRT> | <ABS>)?"(" Expression() ")"
+ }
+ String Id():
+ {Token t;String s;}
+ {
+     t=<Id>
+     {
+        s = (String)t.image;
+        if(symtab.table.get(s)==null){
+            Symbol temp = new Symbol(s, "int");
+            symtab.table.put(s, temp);
+        }
+        return s;
+     }
+ }
+ String Int():
+ {Token t;String s;}
+ {
+     t=<Int>
+     {
+        s = (String)t.image;
+        if(symtab.table.get(s)==null){
+            Symbol temp = new Symbol(s, "int");   
+            symtab.table.put(s, temp);
+        }
+        return s;
+     }
+ }
+
+
+
